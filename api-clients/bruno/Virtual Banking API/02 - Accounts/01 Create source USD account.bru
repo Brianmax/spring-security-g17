@@ -1,0 +1,31 @@
+meta {
+  name: Create source USD account
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users/{{userId}}/accounts
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "accountType": "CHECKING",
+    "currency": "USD"
+  }
+}
+
+tests {
+  test("source account is created and captured", function () {
+    expect(res.getStatus()).to.equal(201);
+    const body = res.getBody();
+    expect(body.balance).to.equal(0);
+    bru.setVar("sourceAccountId", body.id);
+  });
+}

@@ -1,0 +1,18 @@
+meta {
+  name: List user accounts
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/users/{{userId}}/accounts?page=0&size=10
+  body: none
+  auth: none
+}
+
+tests {
+  test("account page contains created accounts", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().content.length).to.be.at.least(4);
+  });
+}

@@ -1,0 +1,42 @@
+meta {
+  name: Create user
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "firstName": "Ada",
+    "lastName": "Lovelace",
+    "email": "{{testEmail}}"
+  }
+}
+
+script:pre-request {
+  const runId = `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+  bru.setVar("testEmail", `bruno.${runId}@example.com`);
+  bru.setVar("idempotencyKey", `bruno-transfer-${runId}`);
+}
+
+tests {
+  test("user is created and captured", function () {
+    expect(res.getStatus()).to.equal(201);
+    const body = res.getBody();
+    expect(body.status).to.equal("ACTIVE");
+    bru.setVar("userId", body.id);
+  });
+
+  test("request ID is returned", function () {
+    expect(res.getHeader("x-request-id")).to.exist;
+  });
+}

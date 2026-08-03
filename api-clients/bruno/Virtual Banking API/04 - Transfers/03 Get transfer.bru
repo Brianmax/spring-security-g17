@@ -1,0 +1,18 @@
+meta {
+  name: Get transfer
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/transfers/{{transferId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("completed transfer is returned", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().status).to.equal("COMPLETED");
+  });
+}

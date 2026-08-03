@@ -1,0 +1,20 @@
+meta {
+  name: List source transactions
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/accounts/{{sourceAccountId}}/transactions?page=0&size=20&sort=createdAt,desc
+  body: none
+  auth: none
+}
+
+tests {
+  test("transaction page is returned", function () {
+    expect(res.getStatus()).to.equal(200);
+    const body = res.getBody();
+    expect(body.content.length).to.be.at.least(3);
+    expect(body.totalElements).to.be.at.least(3);
+  });
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Deposit 100 USD
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/accounts/{{sourceAccountId}}/deposits
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "amount": 100.00,
+    "description": "Bruno initial deposit"
+  }
+}
+
+tests {
+  test("deposit is completed and captured", function () {
+    expect(res.getStatus()).to.equal(201);
+    const body = res.getBody();
+    expect(body.transactionType).to.equal("DEPOSIT");
+    expect(body.balanceAfterTransaction).to.equal(100);
+    bru.setVar("transactionId", body.id);
+  });
+}

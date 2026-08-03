@@ -1,0 +1,29 @@
+meta {
+  name: Reject deposit on frozen account
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/accounts/{{destinationAccountId}}/deposits
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "amount": 1.00,
+    "description": "Must be rejected while frozen"
+  }
+}
+
+tests {
+  test("frozen deposit is rejected", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().code).to.equal("ACCOUNT_NOT_ACTIVE");
+  });
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Reject same account
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/transfers
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "sourceAccountId": "{{sourceAccountId}}",
+    "destinationAccountId": "{{sourceAccountId}}",
+    "amount": 1.00,
+    "description": "Invalid same-account transfer",
+    "idempotencyKey": "{{idempotencyKey}}-same"
+  }
+}
+
+tests {
+  test("same-account transfer is rejected", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().code).to.equal("SAME_ACCOUNT_TRANSFER");
+  });
+}

@@ -1,0 +1,18 @@
+meta {
+  name: Freeze destination account
+  type: http
+  seq: 1
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/accounts/{{destinationAccountId}}/freeze
+  body: none
+  auth: none
+}
+
+tests {
+  test("account is frozen", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().status).to.equal("FROZEN");
+  });
+}

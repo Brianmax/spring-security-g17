@@ -1,0 +1,18 @@
+meta {
+  name: Unfreeze destination account
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/accounts/{{destinationAccountId}}/unfreeze
+  body: none
+  auth: none
+}
+
+tests {
+  test("account is active", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().status).to.equal("ACTIVE");
+  });
+}

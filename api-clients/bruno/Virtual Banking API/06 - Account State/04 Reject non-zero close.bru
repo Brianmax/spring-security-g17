@@ -1,0 +1,18 @@
+meta {
+  name: Reject closing non-zero account
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/accounts/{{sourceAccountId}}/close
+  body: none
+  auth: none
+}
+
+tests {
+  test("non-zero close is rejected", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().code).to.equal("NON_ZERO_BALANCE");
+  });
+}

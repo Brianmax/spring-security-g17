@@ -1,0 +1,18 @@
+meta {
+  name: Close zero-balance EUR account
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/accounts/{{eurAccountId}}/close
+  body: none
+  auth: none
+}
+
+tests {
+  test("zero-balance account is closed", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().status).to.equal("CLOSED");
+  });
+}

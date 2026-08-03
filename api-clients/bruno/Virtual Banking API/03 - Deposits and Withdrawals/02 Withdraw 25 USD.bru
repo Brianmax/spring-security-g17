@@ -1,0 +1,31 @@
+meta {
+  name: Withdraw 25 USD
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/accounts/{{sourceAccountId}}/withdrawals
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "amount": 25.00,
+    "description": "Bruno withdrawal"
+  }
+}
+
+tests {
+  test("withdrawal is completed", function () {
+    expect(res.getStatus()).to.equal(201);
+    const body = res.getBody();
+    expect(body.transactionType).to.equal("WITHDRAWAL");
+    expect(body.balanceAfterTransaction).to.equal(75);
+  });
+}

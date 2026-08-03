@@ -1,0 +1,17 @@
+meta {
+  name: Delete or deactivate user
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/users/{{userId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("delete request is accepted", function () {
+    expect(res.getStatus()).to.equal(204);
+  });
+}

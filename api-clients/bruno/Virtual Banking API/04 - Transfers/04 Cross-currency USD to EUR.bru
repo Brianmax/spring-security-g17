@@ -1,0 +1,42 @@
+meta {
+  name: Cross-currency USD to EUR
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/transfers
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "sourceAccountId": "{{sourceAccountId}}",
+    "destinationAccountId": "{{conversionAccountId}}",
+    "amount": 1.00,
+    "description": "USD to EUR conversion",
+    "idempotencyKey": "{{idempotencyKey}}-currency"
+  }
+}
+
+tests {
+  test("cross-currency behavior matches provider configuration", function () {
+    const enabled = String(bru.getEnvVar("crossCurrencyEnabled")) === "true";
+    expect(res.getStatus()).to.equal(enabled ? 201 : 503);
+    const body = res.getBody();
+    if (enabled) {
+      expect(body.status).to.equal("COMPLETED");
+      expect(body.sourceCurrency).to.equal("USD");
+      expect(body.destinationCurrency).to.equal("EUR");
+      expect(body.destinationAmount).to.be.above(0);
+      expect(body.exchangeRateProvider).to.equal("DECOLECTA_SBS_AVERAGE");
+    } else {
+      expect(body.code).to.equal("EXCHANGE_RATE_NOT_CONFIGURED");
+    }
+  });
+}

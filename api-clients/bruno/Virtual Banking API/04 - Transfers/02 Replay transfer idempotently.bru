@@ -1,0 +1,32 @@
+meta {
+  name: Replay transfer idempotently
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/transfers
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "sourceAccountId": "{{sourceAccountId}}",
+    "destinationAccountId": "{{destinationAccountId}}",
+    "amount": 25.00,
+    "description": "Bruno transfer",
+    "idempotencyKey": "{{idempotencyKey}}"
+  }
+}
+
+tests {
+  test("original transfer is returned", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().id).to.equal(bru.getVar("transferId"));
+  });
+}

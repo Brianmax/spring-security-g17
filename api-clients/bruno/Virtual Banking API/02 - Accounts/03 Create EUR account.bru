@@ -1,0 +1,29 @@
+meta {
+  name: Create EUR account
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users/{{userId}}/accounts
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "accountType": "SAVINGS",
+    "currency": "EUR"
+  }
+}
+
+tests {
+  test("EUR account is created and captured", function () {
+    expect(res.getStatus()).to.equal(201);
+    bru.setVar("eurAccountId", res.getBody().id);
+  });
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Reject insufficient funds transfer
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/transfers
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "sourceAccountId": "{{sourceAccountId}}",
+    "destinationAccountId": "{{destinationAccountId}}",
+    "amount": 999999.00,
+    "description": "Invalid oversized transfer",
+    "idempotencyKey": "{{idempotencyKey}}-funds"
+  }
+}
+
+tests {
+  test("insufficient funds are rejected", function () {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().code).to.equal("INSUFFICIENT_FUNDS");
+  });
+}

@@ -1,0 +1,29 @@
+meta {
+  name: Create EUR conversion account
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users/{{userId}}/accounts
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "accountType": "CHECKING",
+    "currency": "EUR"
+  }
+}
+
+tests {
+  test("EUR conversion account is created and captured", function () {
+    expect(res.getStatus()).to.equal(201);
+    bru.setVar("conversionAccountId", res.getBody().id);
+  });
+}
