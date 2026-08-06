@@ -5,15 +5,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -36,13 +30,6 @@ public class UserEntity extends AuditableEntity {
     @Column(nullable = false, length = 20)
     private UserStatus status;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<SecurityRoleEntity> roles = new HashSet<>();
 
     protected UserEntity() {
     }
@@ -65,13 +52,6 @@ public class UserEntity extends AuditableEntity {
         this.status = UserStatus.INACTIVE;
     }
 
-    public void addRole(SecurityRoleEntity role) {
-        roles.add(role);
-    }
-
-    public void removeRole(SecurityRoleEntity role) {
-        roles.remove(role);
-    }
 
     public UUID getId() {
         return id;
@@ -93,7 +73,4 @@ public class UserEntity extends AuditableEntity {
         return status;
     }
 
-    public Set<SecurityRoleEntity> getRoles() {
-        return roles;
-    }
 }

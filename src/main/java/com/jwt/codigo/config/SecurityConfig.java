@@ -1,5 +1,6 @@
 package com.jwt.codigo.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,13 +17,13 @@ import java.security.interfaces.RSAPublicKey;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) {
+    SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity.build();
     }
 
     @Bean
-    PasswordEncoder passwordEncoder(int strenght) {
-        return new BCryptPasswordEncoder(strenght);
+    PasswordEncoder passwordEncoder(@Value("${security.password.bcrypt-strength}") int strength) {
+        return new BCryptPasswordEncoder(strength);
     }
 
     @Bean
