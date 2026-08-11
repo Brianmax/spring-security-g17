@@ -1,5 +1,8 @@
 package com.jwt.codigo.config;
 
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,18 +10,22 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.nio.charset.StandardCharsets;
-import java.rmi.server.ExportException;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.Instant;
 import java.util.Base64;
+import com.nimbusds.jose.jwk.*;
 
 @Configuration
 public class SecurityConfig {
@@ -50,14 +57,37 @@ public class SecurityConfig {
     }
 
     @Bean
-    JwtEncoder jwtEncoder() {
-        // configuracion de encoder
-        return null;
+    JwtEncoder jwtEncoder(JwtProperties properties) {
+        RSAPublicKey publicKey = readPublicKey(properties);
+        RSAPrivateKey privateKey = readPrivateKey(properties);
+        RSAKey rsaKey = new RSAKey.Builder(publicKey)
+                .privateKey(privateKey)
+                .build();
+        JWKSource<SecurityContext> source = new ImmutableJWKSet<>(new JWKSet(rsaKey));
+        return new NimbusJwtEncoder(source);
     }
 
     @Bean
-    JwtDecoder jwtDecoder() {
-        return null;
+    JwtDecoder jwtDecoder(JwtProperties properties) {
+        NimbusJwtDecoder decoder = NimbusJwtDecoder
+                .withPublicKey(readPublicKey(properties))
+                .signatureAlgorithm(SignatureAlgorithm.RS256)
+                .build();
+
+        JwtTimestampValidator timestamps = new JwtTimestampValidator(properties.getClockSkew());
+        JwtIssuerValidator issuer = new JwtIssuerValidator(properties.getIssuer());
+
+        OAuth2TokenValidator<Jwt> audience = jwt ->
+                jwt.getAudience().contains(properties.getAudience())
+                ? OAuth2TokenValidatorResult.success()
+                        : OAuth2TokenValidatorResult.failure(new OAuth2Error("" +
+                        "Invalid token",
+                        "El audience no existe o no coincide",
+                        null));
+
+        OAuth2TokenValidator<Jwt> requiredTimes = jwt -> {
+            Instant latestIssue = Instant.now().plus(properties.getClockSkew())
+        }
     }
 
     private RSAPublicKey readPublicKey(JwtProperties jwtProperties) {
