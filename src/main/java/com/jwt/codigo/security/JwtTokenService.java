@@ -35,6 +35,7 @@ public class JwtTokenService {
                 .issuedAt(issuedAt)
                 .notBefore(issuedAt)
                 .expiresAt(issuedAt.plus(jwtProperties.getAccessTokenTtl()))
+                .claim("ver", credential.getAuthVersion())
                 .build();
 
         JwsHeader header = JwsHeader

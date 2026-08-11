@@ -6,6 +6,7 @@ import com.jwt.codigo.entity.UserCredentialEntity;
 import com.jwt.codigo.repository.UserCredentialRepository;
 import com.nimbusds.jwt.JWT;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken;
@@ -33,13 +34,18 @@ public class JwtUserAuthenticationConverter implements Converter<Jwt, AbstractOA
         UserCredentialEntity credentialEntity = userCredentialRepository.findById(userId)
                 .orElse(null);
 
+        Long tokenVersion = jwt.getClaim("ver");
+        if(credentialEntity.getAuthVersion() != tokenVersion) {
+            throw new BadCredentialsException("El acceso mediante este token ya no es valido");
+        }
+
 
         // extraemos los roles actuales
         List<SimpleGrantedAuthority> authorities = roles(credentialEntity).stream()
                 .map(SimpleGrantedAuthority::new)
                 .toList();
 
-        return new JwtAuthenticationToken(
+        return new JwtAuthenticationToken( // Authentication
                 jwt,
                 authorities,
                 userId.toString()
