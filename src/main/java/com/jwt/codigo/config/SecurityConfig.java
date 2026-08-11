@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
@@ -86,8 +87,22 @@ public class SecurityConfig {
                         null));
 
         OAuth2TokenValidator<Jwt> requiredTimes = jwt -> {
-            Instant latestIssue = Instant.now().plus(properties.getClockSkew())
-        }
+            Instant latestIssue = Instant.now().plus(properties.getClockSkew());
+            boolean valid = jwt.getIssuedAt() != null
+                    && jwt.getNotBefore() != null
+                    && jwt.getExpiresAt() != null
+                    && jwt.getIssuedAt().isAfter(latestIssue);
+            return valid ? OAuth2TokenValidatorResult.success()
+                    : OAuth2TokenValidatorResult.failure(new OAuth2Error(
+                            "invalid token",
+                    "tiempos invalidos",
+                    null
+            ));
+        };
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
+                timestamps, issuer, audience, requiredTimes
+        ));
+        return decoder;
     }
 
     private RSAPublicKey readPublicKey(JwtProperties jwtProperties) {
