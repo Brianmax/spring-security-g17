@@ -1,5 +1,8 @@
 package com.jwt.codigo.config;
 
+import com.jwt.codigo.security.JwtUserAuthenticationConverter;
+import com.jwt.codigo.security.RestAccessDeniedHandler;
+import com.jwt.codigo.security.RestAuthenticationEntryPoint;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -32,7 +35,12 @@ import com.nimbusds.jose.jwk.*;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+    SecurityFilterChain securityFilterChain(
+            HttpSecurity httpSecurity,
+            JwtUserAuthenticationConverter authConverter,
+            RestAuthenticationEntryPoint restAuthenticationEntryPoint,
+            RestAccessDeniedHandler accessDeniedHandler
+    ) throws Exception {
         return httpSecurity
                 .csrf(csrf->csrf.disable())
                 .formLogin(form -> form.disable())
@@ -45,8 +53,15 @@ public class SecurityConfig {
                                 "/api/v1/auth/login").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
-                        .jwt()
-
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(
+                                authConverter
+                        ))
+                        .authenticationEntryPoint(restAuthenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(restAuthenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
+                .build();
     }
 
     @Bean
