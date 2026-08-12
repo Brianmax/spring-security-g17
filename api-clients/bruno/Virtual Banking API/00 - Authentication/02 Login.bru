@@ -1,0 +1,25 @@
+meta {
+  name: Login and capture tokens
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/login
+  body: json
+  auth: none
+}
+
+headers { Content-Type: application/json }
+body:json {
+  { "email": "{{customerEmail}}", "password": "{{customerPassword}}" }
+}
+
+script:post-response {
+  if (res.getStatus() === 200) {
+    bru.setVar("accessToken", res.getBody().accessToken);
+    bru.setVar("refreshToken", res.getBody().refreshToken);
+  }
+}
+
+tests { test("login succeeds", function () { expect(res.getStatus()).to.equal(200); }); }
