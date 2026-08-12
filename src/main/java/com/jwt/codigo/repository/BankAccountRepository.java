@@ -20,6 +20,8 @@ public interface BankAccountRepository extends JpaRepository<BankAccountEntity, 
 
     boolean existsByOwnerId(UUID ownerId);
 
+    boolean existsByIdAndOwnerId(UUID id, UUID ownerId);
+
     boolean existsByAccountNumber(String accountNumber);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

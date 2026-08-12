@@ -9,6 +9,10 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.Transient;
+import org.springframework.data.domain.Persistable;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
@@ -18,7 +22,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "auth_credentials")
-public class UserCredentialEntity extends AuditableEntity {
+public class UserCredentialEntity extends AuditableEntity implements Persistable<UUID> {
 
     @Id
     @Column(name = "user_id")
@@ -46,6 +50,9 @@ public class UserCredentialEntity extends AuditableEntity {
     )
     private Set<RoleEntity> roles = new LinkedHashSet<>();
 
+    @Transient
+    private boolean newEntity = true;
+
     protected UserCredentialEntity() {
     }
 
@@ -72,6 +79,22 @@ public class UserCredentialEntity extends AuditableEntity {
 
     public void incrementAuthVersion() {
         authVersion++;
+    }
+
+    @Override
+    public UUID getId() {
+        return userId;
+    }
+
+    @Override
+    public boolean isNew() {
+        return newEntity;
+    }
+
+    @PostLoad
+    @PostPersist
+    void markNotNew() {
+        newEntity = false;
     }
 
     public UUID getUserId() {

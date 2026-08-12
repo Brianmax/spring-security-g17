@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,6 +35,7 @@ public class AccountOperationController {
     }
 
     @PostMapping("/deposits")
+    @PreAuthorize("hasAuthority('deposit:create:any') or (hasAuthority('deposit:create:self') and @bankingAuthorization.ownsAccount(authentication, #accountId))")
     @Operation(summary = "Deposit virtual money", description = "Atomically credits an active account and creates a DEPOSIT ledger entry")
     @ApiResponse(responseCode = "201", description = "Deposit completed",
             content = @Content(schema = @Schema(implementation = TransactionResponse.class)))
@@ -46,6 +48,7 @@ public class AccountOperationController {
     }
 
     @PostMapping("/withdrawals")
+    @PreAuthorize("hasAuthority('withdrawal:create:any') or (hasAuthority('withdrawal:create:self') and @bankingAuthorization.ownsAccount(authentication, #accountId))")
     @Operation(summary = "Withdraw virtual money",
             description = "Atomically debits an active account without overdraft and creates a WITHDRAWAL ledger entry")
     @ApiResponse(responseCode = "201", description = "Withdrawal completed",

@@ -35,6 +35,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.math.BigDecimal;
@@ -377,6 +378,7 @@ class BankingIntegrationTest extends PostgresIntegrationTest {
     }
 
     @Test
+    @WithMockUser(authorities = "deposit:create:any")
     void returnsConsistentValidationErrorWithRequestId() throws Exception {
         String accountId = UUID.randomUUID().toString();
         mockMvc.perform(post("/api/v1/accounts/{accountId}/deposits", accountId)

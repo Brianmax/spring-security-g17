@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "76d03eaa-c70a-405c-9973-86b6fda11029",
-    "name": "Virtual Banking API - Phase One",
-    "description": "End-to-end requests for the virtual banking API. Run folders in collection order against a clean or existing local database. IDs and unique test values are captured as collection variables. No authentication is required in phase one.",
+    "name": "Virtual Banking API - JWT",
+    "description": "Colección autenticada. Ejecute primero 00 - Authentication. Los tokens se guardan como variables de ejecución; las operaciones administrativas requieren un token SUPPORT o ADMIN.",
     "version": {
       "major": 1,
       "minor": 0,
@@ -29,18 +29,281 @@
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
-    { "key": "testEmail", "value": "", "type": "string" },
-    { "key": "idempotencyKey", "value": "", "type": "string" },
-    { "key": "userId", "value": "", "type": "string" },
-    { "key": "sourceAccountId", "value": "", "type": "string" },
-    { "key": "destinationAccountId", "value": "", "type": "string" },
-    { "key": "eurAccountId", "value": "", "type": "string" },
-    { "key": "conversionAccountId", "value": "", "type": "string" },
-    { "key": "transactionId", "value": "", "type": "string" },
-    { "key": "transferId", "value": "", "type": "string" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "testEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idempotencyKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sourceAccountId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "destinationAccountId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "eurAccountId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "conversionAccountId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transactionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transferId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
   ],
   "item": [
+    {
+      "name": "00 - Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ada\",\n  \"lastName\": \"Lovelace\",\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Registered\", () => pm.expect(pm.response.code).to.be.oneOf([201,409]));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"userId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Logged in\", () => pm.response.to.have.status(200));",
+                  "const b=pm.response.json(); pm.collectionVariables.set(\"accessToken\",b.accessToken); pm.collectionVariables.set(\"refreshToken\",b.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Authenticated\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Rotated\", () => pm.response.to.have.status(200));",
+                  "const b=pm.response.json(); pm.collectionVariables.set(\"accessToken\",b.accessToken); pm.collectionVariables.set(\"refreshToken\",b.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Revoked\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "01 - Users",
       "description": "Creates a unique active user and exercises user reads and updates.",
@@ -74,11 +337,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"firstName\": \"Ada\",\n  \"lastName\": \"Lovelace\",\n  \"email\": \"{{testEmail}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/users",
             "description": "Generates a unique email and stores the returned UUID as userId."
@@ -87,32 +359,55 @@
         },
         {
           "name": "Get user",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('User returned', () => pm.response.to.have.status(200));",
-              "pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('userId'));"
-            ] }
-          }],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/users/{{userId}}" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('User returned', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('userId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/users/{{userId}}"
+          },
           "response": []
         },
         {
           "name": "Update user",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('User updated', () => pm.response.to.have.status(200));",
-              "pm.expect(pm.response.json().lastName).to.eql('Byron');"
-            ] }
-          }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('User updated', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json().lastName).to.eql('Byron');"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"firstName\": \"Ada\",\n  \"lastName\": \"Byron\",\n  \"email\": \"{{testEmail}}\",\n  \"status\": \"ACTIVE\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/users/{{userId}}"
           },
@@ -120,16 +415,25 @@
         },
         {
           "name": "List users",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('User page returned', () => pm.response.to.have.status(200));",
-              "const body = pm.response.json();",
-              "pm.expect(body.content).to.be.an('array');",
-              "pm.expect(body).to.have.property('totalElements');"
-            ] }
-          }],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/users?page=0&size=10&sort=createdAt,desc" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('User page returned', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.content).to.be.an('array');",
+                  "pm.expect(body).to.have.property('totalElements');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/users?page=0&size=10&sort=createdAt,desc"
+          },
           "response": []
         }
       ]
@@ -140,96 +444,186 @@
       "item": [
         {
           "name": "Create source USD account",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Source account created', () => pm.response.to.have.status(201));",
-              "const body = pm.response.json();",
-              "pm.expect(body.balance).to.eql(0);",
-              "pm.collectionVariables.set('sourceAccountId', body.id);"
-            ] }
-          }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Source account created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.balance).to.eql(0);",
+                  "pm.collectionVariables.set('sourceAccountId', body.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"accountType\": \"CHECKING\",\n  \"currency\": \"USD\"\n}", "options": { "raw": { "language": "json" } } },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountType\": \"CHECKING\",\n  \"currency\": \"USD\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": "{{baseUrl}}/api/v1/users/{{userId}}/accounts"
           },
           "response": []
         },
         {
           "name": "Create destination USD account",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Destination account created', () => pm.response.to.have.status(201));",
-              "pm.collectionVariables.set('destinationAccountId', pm.response.json().id);"
-            ] }
-          }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Destination account created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('destinationAccountId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"accountType\": \"SAVINGS\",\n  \"currency\": \"USD\"\n}", "options": { "raw": { "language": "json" } } },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountType\": \"SAVINGS\",\n  \"currency\": \"USD\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": "{{baseUrl}}/api/v1/users/{{userId}}/accounts"
           },
           "response": []
         },
         {
           "name": "Create EUR account",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('EUR account created', () => pm.response.to.have.status(201));",
-              "pm.collectionVariables.set('eurAccountId', pm.response.json().id);"
-            ] }
-          }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('EUR account created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('eurAccountId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"accountType\": \"SAVINGS\",\n  \"currency\": \"EUR\"\n}", "options": { "raw": { "language": "json" } } },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountType\": \"SAVINGS\",\n  \"currency\": \"EUR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": "{{baseUrl}}/api/v1/users/{{userId}}/accounts"
           },
           "response": []
         },
         {
           "name": "Create EUR conversion account",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('EUR conversion account created', () => pm.response.to.have.status(201));",
-              "pm.collectionVariables.set('conversionAccountId', pm.response.json().id);"
-            ] }
-          }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('EUR conversion account created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('conversionAccountId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"accountType\": \"CHECKING\",\n  \"currency\": \"EUR\"\n}", "options": { "raw": { "language": "json" } } },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountType\": \"CHECKING\",\n  \"currency\": \"EUR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": "{{baseUrl}}/api/v1/users/{{userId}}/accounts"
           },
           "response": []
         },
         {
           "name": "List user accounts",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Account page returned', () => pm.response.to.have.status(200));",
-              "pm.expect(pm.response.json().content.length).to.be.at.least(4);"
-            ] }
-          }],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/users/{{userId}}/accounts?page=0&size=10" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Account page returned', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json().content.length).to.be.at.least(4);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/users/{{userId}}/accounts?page=0&size=10"
+          },
           "response": []
         },
         {
           "name": "Get source account",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Account returned', () => pm.response.to.have.status(200));",
-              "pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('sourceAccountId'));"
-            ] }
-          }],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/accounts/{{sourceAccountId}}" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Account returned', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('sourceAccountId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/accounts/{{sourceAccountId}}"
+          },
           "response": []
         }
       ]
@@ -239,39 +633,75 @@
       "item": [
         {
           "name": "Deposit 100 USD",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Deposit completed', () => pm.response.to.have.status(201));",
-              "const body = pm.response.json();",
-              "pm.expect(body.transactionType).to.eql('DEPOSIT');",
-              "pm.expect(body.balanceAfterTransaction).to.eql(100);",
-              "pm.collectionVariables.set('transactionId', body.id);"
-            ] }
-          }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Deposit completed', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.transactionType).to.eql('DEPOSIT');",
+                  "pm.expect(body.balanceAfterTransaction).to.eql(100);",
+                  "pm.collectionVariables.set('transactionId', body.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"amount\": 100.00,\n  \"description\": \"Postman initial deposit\"\n}", "options": { "raw": { "language": "json" } } },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 100.00,\n  \"description\": \"Postman initial deposit\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": "{{baseUrl}}/api/v1/accounts/{{sourceAccountId}}/deposits"
           },
           "response": []
         },
         {
           "name": "Withdraw 25 USD",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Withdrawal completed', () => pm.response.to.have.status(201));",
-              "const body = pm.response.json();",
-              "pm.expect(body.transactionType).to.eql('WITHDRAWAL');",
-              "pm.expect(body.balanceAfterTransaction).to.eql(75);"
-            ] }
-          }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Withdrawal completed', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.transactionType).to.eql('WITHDRAWAL');",
+                  "pm.expect(body.balanceAfterTransaction).to.eql(75);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"amount\": 25.00,\n  \"description\": \"Postman withdrawal\"\n}", "options": { "raw": { "language": "json" } } },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 25.00,\n  \"description\": \"Postman withdrawal\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": "{{baseUrl}}/api/v1/accounts/{{sourceAccountId}}/withdrawals"
           },
           "response": []
@@ -284,75 +714,138 @@
       "item": [
         {
           "name": "Transfer 25 USD",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Transfer created', () => pm.response.to.have.status(201));",
-              "const body = pm.response.json();",
-              "pm.expect(body.status).to.eql('COMPLETED');",
-              "pm.collectionVariables.set('transferId', body.id);"
-            ] }
-          }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Transfer created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.status).to.eql('COMPLETED');",
+                  "pm.collectionVariables.set('transferId', body.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"sourceAccountId\": \"{{sourceAccountId}}\",\n  \"destinationAccountId\": \"{{destinationAccountId}}\",\n  \"amount\": 25.00,\n  \"description\": \"Postman transfer\",\n  \"idempotencyKey\": \"{{idempotencyKey}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"{{sourceAccountId}}\",\n  \"destinationAccountId\": \"{{destinationAccountId}}\",\n  \"amount\": 25.00,\n  \"description\": \"Postman transfer\",\n  \"idempotencyKey\": \"{{idempotencyKey}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": "{{baseUrl}}/api/v1/transfers"
           },
           "response": []
         },
         {
           "name": "Replay transfer idempotently",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Original transfer returned', () => pm.response.to.have.status(200));",
-              "pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('transferId'));"
-            ] }
-          }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Original transfer returned', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('transferId'));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"sourceAccountId\": \"{{sourceAccountId}}\",\n  \"destinationAccountId\": \"{{destinationAccountId}}\",\n  \"amount\": 25.00,\n  \"description\": \"Postman transfer\",\n  \"idempotencyKey\": \"{{idempotencyKey}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"{{sourceAccountId}}\",\n  \"destinationAccountId\": \"{{destinationAccountId}}\",\n  \"amount\": 25.00,\n  \"description\": \"Postman transfer\",\n  \"idempotencyKey\": \"{{idempotencyKey}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": "{{baseUrl}}/api/v1/transfers"
           },
           "response": []
         },
         {
           "name": "Get transfer",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Transfer returned', () => pm.response.to.have.status(200));",
-              "pm.expect(pm.response.json().status).to.eql('COMPLETED');"
-            ] }
-          }],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/transfers/{{transferId}}" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Transfer returned', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json().status).to.eql('COMPLETED');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/transfers/{{transferId}}"
+          },
           "response": []
         },
         {
           "name": "Cross-currency USD to EUR",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "const enabled = pm.environment.get('crossCurrencyEnabled') === 'true';",
-              "pm.test(enabled ? 'Cross-currency transfer completed' : 'Unconfigured provider is rejected safely', () => pm.response.to.have.status(enabled ? 201 : 503));",
-              "const body = pm.response.json();",
-              "if (enabled) {",
-              "  pm.expect(body.status).to.eql('COMPLETED');",
-              "  pm.expect(body.sourceCurrency).to.eql('USD');",
-              "  pm.expect(body.destinationCurrency).to.eql('EUR');",
-              "  pm.expect(body.destinationAmount).to.be.above(0);",
-              "  pm.expect(body.exchangeRateProvider).to.eql('DECOLECTA_SBS_AVERAGE');",
-              "} else {",
-              "  pm.expect(body.code).to.eql('EXCHANGE_RATE_NOT_CONFIGURED');",
-              "}"
-            ] }
-          }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const enabled = pm.environment.get('crossCurrencyEnabled') === 'true';",
+                  "pm.test(enabled ? 'Cross-currency transfer completed' : 'Unconfigured provider is rejected safely', () => pm.response.to.have.status(enabled ? 201 : 503));",
+                  "const body = pm.response.json();",
+                  "if (enabled) {",
+                  "  pm.expect(body.status).to.eql('COMPLETED');",
+                  "  pm.expect(body.sourceCurrency).to.eql('USD');",
+                  "  pm.expect(body.destinationCurrency).to.eql('EUR');",
+                  "  pm.expect(body.destinationAmount).to.be.above(0);",
+                  "  pm.expect(body.exchangeRateProvider).to.eql('DECOLECTA_SBS_AVERAGE');",
+                  "} else {",
+                  "  pm.expect(body.code).to.eql('EXCHANGE_RATE_NOT_CONFIGURED');",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"sourceAccountId\": \"{{sourceAccountId}}\",\n  \"destinationAccountId\": \"{{conversionAccountId}}\",\n  \"amount\": 1.00,\n  \"description\": \"USD to EUR conversion\",\n  \"idempotencyKey\": \"{{idempotencyKey}}-currency\"\n}", "options": { "raw": { "language": "json" } } },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"{{sourceAccountId}}\",\n  \"destinationAccountId\": \"{{conversionAccountId}}\",\n  \"amount\": 1.00,\n  \"description\": \"USD to EUR conversion\",\n  \"idempotencyKey\": \"{{idempotencyKey}}-currency\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": "{{baseUrl}}/api/v1/transfers",
             "description": "Set integrations.decolecta.api-key in the server application.properties and crossCurrencyEnabled=true in the Postman environment to test a live conversion."
           },
@@ -360,34 +853,70 @@
         },
         {
           "name": "Reject same account",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Same-account transfer rejected', () => pm.response.to.have.status(422));",
-              "pm.expect(pm.response.json().code).to.eql('SAME_ACCOUNT_TRANSFER');"
-            ] }
-          }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Same-account transfer rejected', () => pm.response.to.have.status(422));",
+                  "pm.expect(pm.response.json().code).to.eql('SAME_ACCOUNT_TRANSFER');"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"sourceAccountId\": \"{{sourceAccountId}}\",\n  \"destinationAccountId\": \"{{sourceAccountId}}\",\n  \"amount\": 1.00,\n  \"description\": \"Invalid same-account transfer\",\n  \"idempotencyKey\": \"{{idempotencyKey}}-same\"\n}", "options": { "raw": { "language": "json" } } },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"{{sourceAccountId}}\",\n  \"destinationAccountId\": \"{{sourceAccountId}}\",\n  \"amount\": 1.00,\n  \"description\": \"Invalid same-account transfer\",\n  \"idempotencyKey\": \"{{idempotencyKey}}-same\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": "{{baseUrl}}/api/v1/transfers"
           },
           "response": []
         },
         {
           "name": "Reject insufficient funds transfer",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Insufficient funds rejected', () => pm.response.to.have.status(422));",
-              "pm.expect(pm.response.json().code).to.eql('INSUFFICIENT_FUNDS');"
-            ] }
-          }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Insufficient funds rejected', () => pm.response.to.have.status(422));",
+                  "pm.expect(pm.response.json().code).to.eql('INSUFFICIENT_FUNDS');"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"sourceAccountId\": \"{{sourceAccountId}}\",\n  \"destinationAccountId\": \"{{destinationAccountId}}\",\n  \"amount\": 999999.00,\n  \"description\": \"Invalid oversized transfer\",\n  \"idempotencyKey\": \"{{idempotencyKey}}-funds\"\n}", "options": { "raw": { "language": "json" } } },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"{{sourceAccountId}}\",\n  \"destinationAccountId\": \"{{destinationAccountId}}\",\n  \"amount\": 999999.00,\n  \"description\": \"Invalid oversized transfer\",\n  \"idempotencyKey\": \"{{idempotencyKey}}-funds\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": "{{baseUrl}}/api/v1/transfers"
           },
           "response": []
@@ -399,28 +928,46 @@
       "item": [
         {
           "name": "List source transactions",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Transaction page returned', () => pm.response.to.have.status(200));",
-              "const body = pm.response.json();",
-              "pm.expect(body.content.length).to.be.at.least(3);",
-              "pm.expect(body.totalElements).to.be.at.least(3);"
-            ] }
-          }],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/accounts/{{sourceAccountId}}/transactions?page=0&size=20&sort=createdAt,desc" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Transaction page returned', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.content.length).to.be.at.least(3);",
+                  "pm.expect(body.totalElements).to.be.at.least(3);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/accounts/{{sourceAccountId}}/transactions?page=0&size=20&sort=createdAt,desc"
+          },
           "response": []
         },
         {
           "name": "Get deposit transaction",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Transaction returned', () => pm.response.to.have.status(200));",
-              "pm.expect(pm.response.json().transactionType).to.eql('DEPOSIT');"
-            ] }
-          }],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/transactions/{{transactionId}}" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Transaction returned', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json().transactionType).to.eql('DEPOSIT');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/transactions/{{transactionId}}"
+          },
           "response": []
         }
       ]
@@ -430,67 +977,121 @@
       "item": [
         {
           "name": "Freeze destination account",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Account frozen', () => pm.response.to.have.status(200));",
-              "pm.expect(pm.response.json().status).to.eql('FROZEN');"
-            ] }
-          }],
-          "request": { "method": "PATCH", "header": [], "url": "{{baseUrl}}/api/v1/accounts/{{destinationAccountId}}/freeze" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Account frozen', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json().status).to.eql('FROZEN');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/accounts/{{destinationAccountId}}/freeze"
+          },
           "response": []
         },
         {
           "name": "Reject deposit on frozen account",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Frozen deposit rejected', () => pm.response.to.have.status(422));",
-              "pm.expect(pm.response.json().code).to.eql('ACCOUNT_NOT_ACTIVE');"
-            ] }
-          }],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Frozen deposit rejected', () => pm.response.to.have.status(422));",
+                  "pm.expect(pm.response.json().code).to.eql('ACCOUNT_NOT_ACTIVE');"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"amount\": 1.00,\n  \"description\": \"Must be rejected while frozen\"\n}", "options": { "raw": { "language": "json" } } },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1.00,\n  \"description\": \"Must be rejected while frozen\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": "{{baseUrl}}/api/v1/accounts/{{destinationAccountId}}/deposits"
           },
           "response": []
         },
         {
           "name": "Unfreeze destination account",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Account active', () => pm.response.to.have.status(200));",
-              "pm.expect(pm.response.json().status).to.eql('ACTIVE');"
-            ] }
-          }],
-          "request": { "method": "PATCH", "header": [], "url": "{{baseUrl}}/api/v1/accounts/{{destinationAccountId}}/unfreeze" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Account active', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json().status).to.eql('ACTIVE');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/accounts/{{destinationAccountId}}/unfreeze"
+          },
           "response": []
         },
         {
           "name": "Reject closing non-zero account",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Non-zero close rejected', () => pm.response.to.have.status(422));",
-              "pm.expect(pm.response.json().code).to.eql('NON_ZERO_BALANCE');"
-            ] }
-          }],
-          "request": { "method": "PATCH", "header": [], "url": "{{baseUrl}}/api/v1/accounts/{{sourceAccountId}}/close" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Non-zero close rejected', () => pm.response.to.have.status(422));",
+                  "pm.expect(pm.response.json().code).to.eql('NON_ZERO_BALANCE');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/accounts/{{sourceAccountId}}/close"
+          },
           "response": []
         },
         {
           "name": "Close zero-balance EUR account",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Zero-balance account closed', () => pm.response.to.have.status(200));",
-              "pm.expect(pm.response.json().status).to.eql('CLOSED');"
-            ] }
-          }],
-          "request": { "method": "PATCH", "header": [], "url": "{{baseUrl}}/api/v1/accounts/{{eurAccountId}}/close" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Zero-balance account closed', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json().status).to.eql('CLOSED');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/accounts/{{eurAccountId}}/close"
+          },
           "response": []
         }
       ]
@@ -501,28 +1102,56 @@
       "item": [
         {
           "name": "Delete or deactivate user",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('User deletion request accepted', () => pm.response.to.have.status(204));"
-            ] }
-          }],
-          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/users/{{userId}}" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('User deletion request accepted', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/users/{{userId}}"
+          },
           "response": []
         },
         {
           "name": "Verify user was deactivated",
-          "event": [{
-            "listen": "test",
-            "script": { "type": "text/javascript", "exec": [
-              "pm.test('Deactivated user returned', () => pm.response.to.have.status(200));",
-              "pm.expect(pm.response.json().status).to.eql('INACTIVE');"
-            ] }
-          }],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/users/{{userId}}" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Deactivated user returned', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json().status).to.eql('INACTIVE');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/users/{{userId}}"
+          },
           "response": []
         }
       ]
     }
-  ]
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  }
 }

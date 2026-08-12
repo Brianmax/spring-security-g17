@@ -13,6 +13,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import com.jwt.codigo.entity.PermissionEntity;
+import com.jwt.codigo.entity.RoleEntity;
+
 @Service
 public class JwtTokenService {
     private final JwtEncoder jwtEncoder;
@@ -35,6 +38,10 @@ public class JwtTokenService {
                 .issuedAt(issuedAt)
                 .notBefore(issuedAt)
                 .expiresAt(issuedAt.plus(jwtProperties.getAccessTokenTtl()))
+                .claim("roles", credential.getRoles().stream().map(RoleEntity::getCode).sorted().toList())
+                .claim("permissions", credential.getRoles().stream()
+                        .flatMap(role -> role.getPermissions().stream())
+                        .map(PermissionEntity::getCode).distinct().sorted().toList())
                 .claim("ver", credential.getAuthVersion())
                 .build();
 

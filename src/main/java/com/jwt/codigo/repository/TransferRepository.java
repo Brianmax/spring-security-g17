@@ -8,5 +8,8 @@ import java.util.UUID;
 
 public interface TransferRepository extends JpaRepository<TransferEntity, UUID> {
 
+    boolean existsByIdAndSourceAccountOwnerIdOrIdAndDestinationAccountOwnerId(
+            UUID sourceTransferId, UUID sourceOwnerId, UUID destinationTransferId, UUID destinationOwnerId);
+
     Optional<TransferEntity> findByIdempotencyKey(String idempotencyKey);
 }

@@ -17,6 +17,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +43,7 @@ public class UserController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('user:create:any')")
     @Operation(summary = "Create a user")
     @ApiResponse(responseCode = "201", description = "User created",
             content = @Content(schema = @Schema(implementation = UserResponse.class)))
@@ -51,6 +53,7 @@ public class UserController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('user:read:any')")
     @Operation(summary = "List users", description = "Returns a zero-based page; default size is 20 and maximum size is 100")
     @ApiResponse(responseCode = "200", description = "User page")
     public PageResponse<UserResponse> findAll(
@@ -60,6 +63,7 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
+    @PreAuthorize("hasAuthority('user:read:any') or (hasAuthority('user:read:self') and @bankingAuthorization.isSelf(authentication, #userId))")
     @Operation(summary = "Get a user")
     @ApiResponse(responseCode = "200", description = "User found",
             content = @Content(schema = @Schema(implementation = UserResponse.class)))
@@ -70,6 +74,7 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
+    @PreAuthorize("hasAuthority('user:update:any') or (hasAuthority('user:update:self') and @bankingAuthorization.isSelf(authentication, #userId))")
     @Operation(summary = "Update a user")
     @ApiResponse(responseCode = "200", description = "User updated",
             content = @Content(schema = @Schema(implementation = UserResponse.class)))
@@ -81,6 +86,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
+    @PreAuthorize("hasAuthority('user:deactivate:any')")
     @Operation(summary = "Delete or deactivate a user",
             description = "Hard-deletes a user with no accounts; otherwise changes the user status to INACTIVE")
     @ApiResponse(responseCode = "204", description = "User deleted or deactivated", content = @Content)

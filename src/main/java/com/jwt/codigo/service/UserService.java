@@ -9,6 +9,8 @@ import com.jwt.codigo.exception.ApiException;
 import com.jwt.codigo.mapper.UserMapper;
 import com.jwt.codigo.repository.BankAccountRepository;
 import com.jwt.codigo.repository.UserRepository;
+import com.jwt.codigo.repository.UserCredentialRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -23,15 +25,21 @@ public class UserService {
     private final UserRepository userRepository;
     private final BankAccountRepository accountRepository;
     private final UserMapper userMapper;
+    private final UserCredentialRepository credentialRepository;
+    private final RefreshTokenService refreshTokenService;
 
-    public UserService(
-            UserRepository userRepository,
-            BankAccountRepository accountRepository,
-            UserMapper userMapper
-    ) {
+    public UserService(UserRepository userRepository, BankAccountRepository accountRepository, UserMapper userMapper) {
+        this(userRepository, accountRepository, userMapper, null, null);
+    }
+
+    @Autowired
+    public UserService(UserRepository userRepository, BankAccountRepository accountRepository, UserMapper userMapper,
+                       UserCredentialRepository credentialRepository, RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;
         this.userMapper = userMapper;
+        this.credentialRepository = credentialRepository;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional
@@ -57,7 +65,11 @@ public class UserService {
         UserEntity user = getEntity(userId);
         String email = normalizeEmail(request.email());
         ensureEmailAvailable(email, userId);
+        boolean statusChanged = user.getStatus() != request.status();
         user.update(request.firstName().trim(), request.lastName().trim(), email, request.status());
+        if (statusChanged) {
+            invalidateAuthentication(userId);
+        }
         return userMapper.toResponse(userRepository.saveAndFlush(user));
     }
 
@@ -66,6 +78,7 @@ public class UserService {
         UserEntity user = getEntity(userId);
         if (accountRepository.existsByOwnerId(userId)) {
             user.deactivate();
+            invalidateAuthentication(userId);
             userRepository.save(user);
         } else {
             userRepository.delete(user);
@@ -75,6 +88,16 @@ public class UserService {
     public UserEntity getEntity(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "User not found"));
+    }
+
+    private void invalidateAuthentication(UUID userId) {
+        if (credentialRepository == null || refreshTokenService == null) {
+            return;
+        }
+        credentialRepository.findById(userId).ifPresent(credential -> {
+            credential.incrementAuthVersion();
+            refreshTokenService.revokeAll(userId);
+        });
     }
 
     private void ensureEmailAvailable(String email, UUID currentUserId) {

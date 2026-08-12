@@ -16,6 +16,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,6 +40,7 @@ public class UserAccountController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('account:create:any') or (hasAuthority('account:create:self') and @bankingAuthorization.isSelf(authentication, #userId))")
     @Operation(summary = "Open an account", description = "Inactive users cannot open accounts; initial balance is zero")
     @ApiResponse(responseCode = "201", description = "Account created",
             content = @Content(schema = @Schema(implementation = AccountResponse.class)))
@@ -51,6 +53,7 @@ public class UserAccountController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('account:read:any') or (hasAuthority('account:read:self') and @bankingAuthorization.isSelf(authentication, #userId))")
     @Operation(summary = "List a user's accounts",
             description = "Returns a zero-based page; default size is 20 and maximum size is 100")
     @ApiResponse(responseCode = "200", description = "Account page")

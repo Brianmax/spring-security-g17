@@ -14,6 +14,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +35,7 @@ public class TransactionController {
     }
 
     @GetMapping("/accounts/{accountId}/transactions")
+    @PreAuthorize("hasAuthority('transaction:read:any') or (hasAuthority('transaction:read:self') and @bankingAuthorization.ownsAccount(authentication, #accountId))")
     @Operation(summary = "List account transactions",
             description = "Returns a zero-based page ordered newest-first by default; maximum size is 100")
     @ApiResponse(responseCode = "200", description = "Transaction page")
@@ -46,6 +48,7 @@ public class TransactionController {
     }
 
     @GetMapping("/transactions/{transactionId}")
+    @PreAuthorize("hasAuthority('transaction:read:any') or (hasAuthority('transaction:read:self') and @bankingAuthorization.ownsTransaction(authentication, #transactionId))")
     @Operation(summary = "Get a transaction")
     @ApiResponse(responseCode = "200", description = "Transaction found",
             content = @Content(schema = @Schema(implementation = TransactionResponse.class)))

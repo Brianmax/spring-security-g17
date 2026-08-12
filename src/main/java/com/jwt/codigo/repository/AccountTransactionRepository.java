@@ -9,6 +9,8 @@ import java.util.UUID;
 
 public interface AccountTransactionRepository extends JpaRepository<AccountTransactionEntity, UUID> {
 
+    boolean existsByIdAndAccountOwnerId(UUID id, UUID ownerId);
+
     Page<AccountTransactionEntity> findByAccountId(UUID accountId, Pageable pageable);
 
     long countByAccountId(UUID accountId);

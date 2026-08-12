@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +31,7 @@ public class AccountController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('account:read:any') or (hasAuthority('account:read:self') and @bankingAuthorization.ownsAccount(authentication, #accountId))")
     @Operation(summary = "Get an account")
     @ApiResponse(responseCode = "200", description = "Account found",
             content = @Content(schema = @Schema(implementation = AccountResponse.class)))
@@ -38,6 +40,7 @@ public class AccountController {
     }
 
     @PatchMapping("/freeze")
+    @PreAuthorize("hasAuthority('account:freeze:any')")
     @Operation(summary = "Freeze an account", description = "A frozen account cannot participate in financial operations")
     @ApiResponse(responseCode = "200", description = "Account frozen",
             content = @Content(schema = @Schema(implementation = AccountResponse.class)))
@@ -46,6 +49,7 @@ public class AccountController {
     }
 
     @PatchMapping("/unfreeze")
+    @PreAuthorize("hasAuthority('account:unfreeze:any')")
     @Operation(summary = "Unfreeze an account", description = "Closed accounts cannot be reopened")
     @ApiResponse(responseCode = "200", description = "Account active",
             content = @Content(schema = @Schema(implementation = AccountResponse.class)))
@@ -54,6 +58,7 @@ public class AccountController {
     }
 
     @PatchMapping("/close")
+    @PreAuthorize("hasAuthority('account:close:any') or (hasAuthority('account:close:self') and @bankingAuthorization.ownsAccount(authentication, #accountId))")
     @Operation(summary = "Close an account", description = "Only an account with zero balance can be closed")
     @ApiResponse(responseCode = "200", description = "Account closed",
             content = @Content(schema = @Schema(implementation = AccountResponse.class)))

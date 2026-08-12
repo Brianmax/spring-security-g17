@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,6 +36,7 @@ public class TransferController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('transfer:create:any') or (hasAuthority('transfer:create:self') and @bankingAuthorization.ownsAccount(authentication, #request.sourceAccountId()))")
     @Operation(summary = "Transfer virtual money",
             description = "Transfers in the same currency use a 1:1 rate. Cross-currency transfers use Decolecta SBS "
                     + "average buy/sell rates. Returns 201 for a new transfer and 200 for an idempotent replay.")
@@ -53,6 +55,7 @@ public class TransferController {
     }
 
     @GetMapping("/{transferId}")
+    @PreAuthorize("hasAuthority('transfer:read:any') or (hasAuthority('transfer:read:self') and @bankingAuthorization.participatesInTransfer(authentication, #transferId))")
     @Operation(summary = "Get a transfer")
     @ApiResponse(responseCode = "200", description = "Transfer found",
             content = @Content(schema = @Schema(implementation = TransferResponse.class)))

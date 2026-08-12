@@ -9,6 +9,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -32,6 +33,7 @@ import java.util.Base64;
 import com.nimbusds.jose.jwk.*;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -50,7 +52,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/api/v1/auth/register",
-                                "/api/v1/auth/login").permitAll()
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/refresh",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(
@@ -106,7 +112,7 @@ public class SecurityConfig {
             boolean valid = jwt.getIssuedAt() != null
                     && jwt.getNotBefore() != null
                     && jwt.getExpiresAt() != null
-                    && jwt.getIssuedAt().isAfter(latestIssue);
+                    && !jwt.getIssuedAt().isAfter(latestIssue);
             return valid ? OAuth2TokenValidatorResult.success()
                     : OAuth2TokenValidatorResult.failure(new OAuth2Error(
                             "invalid token",
